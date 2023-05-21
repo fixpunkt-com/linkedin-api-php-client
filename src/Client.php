@@ -87,7 +87,7 @@ class Client
      * Default API root URL
      * string
      */
-    const API_ROOT = 'https://api.linkedin.com/v2/';
+    const API_ROOT = 'https://api.linkedin.com/rest/';
 
     /**
      * API Root URL
@@ -95,6 +95,11 @@ class Client
      * @var string
      */
     protected $apiRoot = self::API_ROOT;
+
+    /**
+     * @var int
+     */
+    protected int $apiVersion = 0;
 
     /**
      * OAuth API URL
@@ -182,6 +187,20 @@ class Client
     public function setApiRoot($apiRoot)
     {
         $this->apiRoot = $apiRoot;
+        return $this;
+    }
+
+    /**
+     * @param int $version
+     * @return $this
+     */
+    public function setApiVersion(int $version) {
+        $versionDatetime = \DateTime::createFromFormat("Ym-d", $version."-1");
+        $versionDatetime -> add(new \DateInterval("P1Y"));
+        if(new \DateTime() < $versionDatetime) {
+            $this -> apiVersion = $version;
+        }
+
         return $this;
     }
 
@@ -539,6 +558,9 @@ class Client
             $params['oauth2_access_token'] = $this->accessToken->getToken();
         } else {
             $headers['Authorization'] = 'Bearer ' . $this->accessToken->getToken();
+        }
+        if($this -> apiVersion) {
+            $headers['Linkedin-Version'] = $this -> apiVersion;
         }
         $guzzle = new GuzzleClient([
             'base_uri' => $this->getApiRoot(),
